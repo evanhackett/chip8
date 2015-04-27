@@ -3,7 +3,7 @@ h1 {
 }
 
 canvas {
-  border: 5px solid;
+  border: 5px solid #777;
   display: block;
   margin: 0 auto;
 }
