@@ -25,7 +25,10 @@ var Chip8 = function() {
 
   // the screen buffer. The resolution of the chip8 is 64 x 32. 
   // If a bit is '1', the pixel should be white. If a bit is '0', the pixel should be black
-  chip.display = new Uint8Array(64 * 32); 
+  chip.screenBuffer = new Uint8Array(64 * 32); 
+
+  // display provides utility functions for interfacing with a graphics api
+  chip.display = new Display();
 
   chip.unsupportedOpcode = function(opcode) {
     console.log("Error: " + opcode.toString(16) + " is not a supported opcode.");
