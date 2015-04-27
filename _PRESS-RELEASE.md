@@ -17,28 +17,28 @@ Once the project moves into development, the press release can be used as a touc
  -->
  
 ## Heading ##
-  > Name the product in a way the reader (i.e. your target customers) will understand.
+  > Chip-8 Emulator
 
 ## Sub-Heading ##
-  > Describe who the market for the product is and what benefit they get. One sentence only underneath the title.
+  > For people who want a browser based chip-8 emulator to run chip-8 games and programs.
 
 ## Summary ##
-  > Give a summary of the product and the benefit. Assume the reader will not read anything else so make this paragraph good.
+  > Runs chip-8 games and programs, allows users to select between a set of games to play.
 
 ## Problem ##
-  > Describe the problem your product solves.
+  > Many people don't understand how computers work at the low level
 
 ## Solution ##
-  > Describe how your product elegantly solves the problem.
+  > Writing chip-8 games and studying a chip-8 emulator is a fun way to learn about hardware and low-level software.
 
 ## Quote from You ##
-  > A quote from a spokesperson in your company.
+  > "Chip-8 emulators are awesome!"
 
 ## How to Get Started ##
-  > Describe how easy it is to get started.
+  > Just select a game from the drop down menu, read the controls, have fun!
 
 ## Customer Quote ##
-  > Provide a quote from a hypothetical customer that describes how they experienced the benefit.
+  > "Nothing like playing Pong on a chip-8!"
 
 ## Closing and Call to Action ##
-  > Wrap it up and give pointers where the reader should go next.
+  > I hope you enjoy playing chip-8 games, or learning about the chip-8 system by reading the source.
