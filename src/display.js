@@ -1,0 +1,1 @@
+// this class represents the display of the chip8. The chip8's display buffer will be drawn to an html canvas 
