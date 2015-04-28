@@ -282,6 +282,7 @@ var Chip8 = function() {
             x = this.getX(opcode);
             y = this.getY(opcode);
             this.V[x] = this.V[x] | this.V[y];
+            this.pc += 2;
             break;
 
           // 8xy2 - AND Vx, Vy
@@ -299,6 +300,7 @@ var Chip8 = function() {
             x = this.getX(opcode);
             y = this.getY(opcode);
             this.V[x] = this.V[x] ^ this.V[y];
+            this.pc += 2;
             break;
 
           // 8xy4 - ADD Vx, Vy
@@ -556,6 +558,7 @@ var Chip8 = function() {
             var character = this.V[x];
             this.I = character * 5;
             console.log("setting I to character V["+x+'] = ' + this.V[x] + ' offset to 0x' + this.I.toString(16));
+            this.pc += 2;
             break;
 
           // Fx33 - LD B, Vx
