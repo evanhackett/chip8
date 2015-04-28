@@ -35,11 +35,27 @@ var Chip8 = function() {
     throw 'unsupported opcode';
   };
 
+  chip.loadProgram = function(fileName) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", "ROMs/"+fileName, true);
+    xhr.responseType = "arraybuffer";
+
+    xhr.onload = function () {
+       var program = new Uint8Array(xhr.response);
+       for (var i = 0; i < program.length; i++) {
+        this.memory[0x200 + i] = program[i];
+      }
+    };
+
+    xhr.send();
+  };
+
   chip.run = function() {
+    console.log('running...');
     // fetch opcode
     // each opcode is 2 bytes. Here we grab 2 bytes from memory and merge them together with a left shift and a bitwise 'OR'.
     var opcode = (this.memory[this.pc] << 8) | this.memory[this.pc + 1];
-    console.log(opcode.toString(16));
+    console.log('opcode: ' + opcode.toString(16));
     // decode opcode
     switch(opcode & 0xF000) { // grab first nibble
 
