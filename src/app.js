@@ -3,7 +3,7 @@ $( document ).ready(function() {
   var chip = new Chip8();
 
   // for now we will hardcode what file to load 
-  chip.loadProgram('PONG2');
+  chip.loadProgram('pong2.c8');
 
   chip.loadFonts();
 

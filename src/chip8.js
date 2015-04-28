@@ -21,8 +21,8 @@ var Chip8 = function() {
   chip.pc = 0x200;
 
   // the stack stores return addresses. Supports 16 levels of nesting
-  chip.stack = new Uint8Array(16);
-  chip.stackPointer = 0;
+  chip.stack = [];
+  // chip.stackPointer = 0;
 
   chip.delayTimer = 0;
   chip.soundTimer = 0;
@@ -138,14 +138,13 @@ var Chip8 = function() {
     // fetch opcode
     // each opcode is 2 bytes. Here we grab 2 bytes from memory and merge them together with a left shift and a bitwise 'OR'.
     var opcode = (this.memory[this.pc] << 8) | this.memory[this.pc + 1];
+
     console.log('opcode: ' + opcode.toString(16));
-
-    console.log('pc: ' + this.pc);
-    // console.log('memory[pc]: ' + this.memory[this.pc]);
-    // console.log('memory[pc] << 8: ' + this.memory[this.pc] << 8);
-    // console.log('(memory[pc] << 8) | memory[pc + 1]: ' + (this.memory[this.pc] << 8) | this.memory[this.pc + 1]);
-
+    // console.log(this.stack);
+    // console.log('stackPointer: ' + this.stackPointer);
+    // console.log('pc: ' + this.pc);
     
+
     var x, y, n, key, kk;
 
     // decode opcode
@@ -164,8 +163,13 @@ var Chip8 = function() {
           // Return from a subroutine.
           case 0x00EE:
             // Set the program counter to the address at the top of the stack, then subtracts 1 from the stack pointer.
-            this.stackPointer--;
-            this.pc = this.stack[this.stackPointer] + 2;
+            // console.log('INSIDE RET');
+            // console.log('stackPointer: ' + this.stackPointer);
+            // console.log(this.stack); // stack is totally empty... so pc gets set to 0 + 2 = 2
+
+            // this.stackPointer--;
+            // this.pc = this.stack[this.stackPointer] + 2;
+            this.pc = this.stack.pop();
             console.log('Returning to ' + this.pc.toString(16));
             break;
 
@@ -190,10 +194,13 @@ var Chip8 = function() {
       // Call subroutine at nnn.
       case 0x2000:
         // The interpreter increments the stack pointer, then puts the current PC on the top of the stack. The PC is then set to nnn.
-        this.stack[this.stackPointer] = this.pc;
-        this.stackPointer++;
+        console.log(this.pc);
+        // this.stack[this.stackPointer] = this.pc;
+        // this.stackPointer++;
+        this.stack.push(this.pc);
         this.pc = opcode & 0x0FFF;
-        console.log("Calling " + this.pc.toString(16));
+        console.log("Calling " + this.pc.toString(16) + ' from ' + this.stack[this.stack.length-1].toString(16));
+        // debugger;
         break;
 
       // 3xkk - SE Vx, byte
@@ -216,7 +223,7 @@ var Chip8 = function() {
         // compares register Vx to kk, and if they are not equal, increments the program counter by 2.
         x = this.getX(opcode);
         kk = this.getKK(opcode);
-        if (x !== kk) {
+        if (this.V[x] !== kk) {
           this.pc += 2;
         }
         this.pc += 2;
@@ -256,7 +263,10 @@ var Chip8 = function() {
           // 8xy0 - LD Vx, Vy
           // Set Vx = Vy.
           case 0x0000:
-          this.unsupportedOpcode(opcode);
+            x = this.getX(opcode);
+            y = this.getY(opcode);
+            this.V[x] = this.V[y];
+            this.pc += 2;
             break;
 
           // 8xy1 - OR Vx, Vy
@@ -302,7 +312,19 @@ var Chip8 = function() {
           // 8xy5 - SUB Vx, Vy
           // Set Vx = Vx - Vy, set VF = NOT borrow.
           case 0x0005:
-          this.unsupportedOpcode(opcode);
+            // If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted from Vx, and the results stored in Vx.
+            x = this.getX(opcode);
+            y = this.getY(opcode);
+
+            if (this.V[x] > this.V[y]) {
+              this.V[0xF] = 1;
+            } else {
+              this.V[0xF] = 0;
+            }
+
+            this.V[x] = (this.V[x] - this.V[y]) & 0xFF;
+
+            this.pc += 2;
             break;
 
           // 8xy6 - SHR Vx {, Vy}
@@ -373,6 +395,11 @@ var Chip8 = function() {
             if (pixel !== 0) {
               var totalX = x + j;
               var totalY = y + i;
+
+              // screen wrap
+              totalX = totalX % 64;
+              totalY = totalY % 32;
+
               var index = totalY * 64 + totalX;
 
               if (this.screenBuffer[index] === 1) {
@@ -447,6 +474,14 @@ var Chip8 = function() {
             console.log("setting DT to V["+x+'] = ' + this.V[x]);
             break;
 
+          // Fx18 - LD ST, Vx
+          // Set sound timer = Vx.
+          case 0x0018:
+            x = this.getX(opcode);
+            this.soundTimer = V[x];
+            this.pc += 2;
+            break;
+
           // Fx29 - LD F, Vx
           // Set I = location of sprite for digit Vx.
           case 0x0029:
@@ -483,7 +518,7 @@ var Chip8 = function() {
           case 0x065:
           // read values from memory starting at location I into registers V0 through Vx.
             x = this.getX(opcode);
-            for (i = 0; i < x; i++) {
+            for (i = 0; i <= x; i++) {
               this.V[i] = this.memory[this.I + i];
             }
             console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(this.I & 0xFFFF).toString(16)+']');
@@ -501,6 +536,14 @@ var Chip8 = function() {
 
       default:
         this.unsupportedOpcode(opcode);
+    }
+  
+    if (this.soundTimer > 0) {
+      this.soundTimer--;
+      // this is where you would play a beep sound
+    }
+    if (this.delayTimer > 0) {
+      this.delayTimer--;
     }
   };
 
