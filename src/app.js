@@ -3,7 +3,7 @@ $( document ).ready(function() {
   var chip = new Chip8();
 
   // for now we will hardcode what file to load 
-  chip.loadProgram('PONG');
+  chip.loadProgram('PONG2');
 
   var tick = function() {
     chip.run();
