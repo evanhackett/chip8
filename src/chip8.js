@@ -86,6 +86,9 @@ var Chip8 = function() {
     // console.log('memory[pc] << 8: ' + this.memory[this.pc] << 8);
     // console.log('(memory[pc] << 8) | memory[pc + 1]: ' + (this.memory[this.pc] << 8) | this.memory[this.pc + 1]);
 
+    
+    var x; // to be used to index a register - V[x]
+
     // decode opcode
     switch(opcode & 0xF000) { // grab first nibble
 
@@ -122,7 +125,7 @@ var Chip8 = function() {
       // Set Vx = kk.
       case 0x6000:
         // The interpreter puts the value kk into register Vx.
-        var x = opcode & 0x0F00;
+        x = opcode & 0x0F00;
         this.V[x] = opcode & 0x00FF;
         this.pc += 2;
         break;
@@ -130,6 +133,10 @@ var Chip8 = function() {
       // 7xkk - ADD Vx, byte
       // Set Vx = Vx + kk.
       case 0x7000:
+        // Adds the value kk to the value of register Vx, then stores the result in Vx. 
+        x = opcode & 0x0F00;
+        this.V[x] += opcode & 0x00FF;
+        this.pc += 2;
         break;
 
       // more data in last nibble, could be one of many instructions
@@ -141,10 +148,25 @@ var Chip8 = function() {
           case 0x0000:
             default:
               this.unsupportedOpcode(opcode);
-          
-
-
         }
+        break;
+
+      // Annn - LD I, addr
+      // Set I = nnn.
+      case 0xA000:
+        // The value of register I is set to nnn.
+        this.I = opcode & 0x0FFF;
+        this.pc += 2;
+        break;
+
+      // Dxyn - DRW Vx, Vy, nibble
+      // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+      case 0xD000:
+      // The interpreter reads n bytes from memory, starting at the address stored in I. 
+      // These bytes are then displayed as sprites on screen at coordinates (Vx, Vy). 
+      // Sprites are XORed onto the existing screen. If this causes any pixels to be erased, VF is set to 1, 
+      // otherwise it is set to 0. If the sprite is positioned so part of it is outside the coordinates of the display, 
+      // it wraps around to the opposite side of the screen.
         break;
 
       default:
