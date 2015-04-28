@@ -30,25 +30,35 @@ var Chip8 = function() {
   // display provides utility functions for interfacing with a graphics api
   chip.display = new Display();
 
+  // display an error and stop program execution when an unsupported opcode is encountered
   chip.unsupportedOpcode = function(opcode) {
     console.log("Error: " + opcode.toString(16) + " is not a supported opcode.");
     throw 'unsupported opcode';
   };
 
+  // loads a ROM into memory
+  // currently I'm using "python -m SimpleHTTPServer" to serve up files
   chip.loadProgram = function(fileName) {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "ROMs/"+fileName, true);
     xhr.responseType = "arraybuffer";
 
+    // to get around 'this' binding issues
+    memory = this.memory;
+
     xhr.onload = function () {
        var program = new Uint8Array(xhr.response);
        for (var i = 0; i < program.length; i++) {
-        this.memory[0x200 + i] = program[i];
+        // load program into memory, starting at address 0x200
+        // this is a convention from old times when chip8's typically stored the interpreter itself in memory from 0x0-0x200
+        memory[0x200 + i] = program[i];
+        // 'this' is not bound to the right object atm
       }
     };
 
     xhr.send();
   };
+
 
   chip.run = function() {
     console.log('running...');

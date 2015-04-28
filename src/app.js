@@ -12,4 +12,7 @@ $( document ).ready(function() {
 
   tick();
 
+  // testing purposes
+  // console.log(chip.memory);
+
 });
