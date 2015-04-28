@@ -5,8 +5,11 @@ $( document ).ready(function() {
   // for now we will hardcode what file to load 
   chip.loadProgram('PONG2');
 
+  chip.loadFonts();
+
   var tick = function() {
     chip.run();
+    chip.display.render(chip.screenBuffer);
     requestAnimationFrame(tick);
   };
 

@@ -4,7 +4,6 @@ var Display = function() {
 
   // this function takes the screenBuffer and draws white pixels where 1's occur and Black pixels where 0's occur
   display.render = function(screenBuffer) {
-
     var canvas = $('#chip8Screen')[0];
     var ctx = canvas.getContext('2d');
     var width = canvas.width;
