@@ -107,6 +107,21 @@ var Chip8 = function() {
     }
   };
 
+  // used to extract the 'x' portion of an opcode
+  chip.getX = function(opcode) {
+    return (opcode & 0x0F00) >> 8;
+  };
+
+  // used to extract the 'y' portion of an opcode
+  chip.getY = function(opcode) {
+    return (opcode & 0x00F0) >> 4;
+  };
+
+  // used to extract the 'kk' portion of an opcode
+  chip.getKK = function(opcode) {
+    return opcode & 0x00FF;
+  };
+
   /*
     Documentation for all opcodes was found here: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy0
     I copy/pasted the opcode descriptions as comments above each case in the switch below
@@ -131,7 +146,7 @@ var Chip8 = function() {
     // console.log('(memory[pc] << 8) | memory[pc + 1]: ' + (this.memory[this.pc] << 8) | this.memory[this.pc + 1]);
 
     
-    var x, y, n, key;
+    var x, y, n, key, kk;
 
     // decode opcode
     switch(opcode & 0xF000) { // grab first nibble
@@ -184,21 +199,27 @@ var Chip8 = function() {
       // 3xkk - SE Vx, byte
       // Skip next instruction if Vx = kk.
       case 0x3000:
-        x = (opcode & 0x0F00) >> 8;
-        n = (opcode & 0x00FF);
-        if (this.V[x] === n) {
+        x = this.getX(opcode);
+        kk = this.getKK(opcode);
+        if (this.V[x] === kk) {
           this.pc += 4;
-          console.log('Skipping next instruction, V['+x+'] === ' + n);
+          console.log('Skipping next instruction, V['+x+'] === ' + kk);
         } else {
           this.pc += 2;
-          console.log('Not skipping next instruction, V['+x+'] !== ' + n);
+          console.log('Not skipping next instruction, V['+x+'] !== ' + kk);
         }
         break;
 
       // 4xkk - SNE Vx, byte
       // Skip next instruction if Vx != kk.
       case 0x4000:
-      this.unsupportedOpcode(opcode);
+        // compares register Vx to kk, and if they are not equal, increments the program counter by 2.
+        x = this.getX(opcode);
+        kk = this.getKK(opcode);
+        if (x !== kk) {
+          this.pc += 2;
+        }
+        this.pc += 2;
         break;
 
       // 5xy0 - SE Vx, Vy
@@ -211,9 +232,9 @@ var Chip8 = function() {
       // Set Vx = kk.
       case 0x6000:
         // The interpreter puts the value kk into register Vx.
-        x = (opcode & 0x0F00) >> 8;
+        x = this.getX(opcode);
         console.log('x: ' + x);
-        this.V[x] = opcode & 0x00FF;
+        this.V[x] = this.getKK(opcode);
         this.pc += 2;
         console.log("Setting V["+x+"] to " + this.V[x]);
         break;
@@ -222,10 +243,10 @@ var Chip8 = function() {
       // Set Vx = Vx + kk.
       case 0x7000:
         // Adds the value kk to the value of register Vx, then stores the result in Vx. 
-        x = (opcode & 0x0F00) >> 8;
-        this.V[x] += opcode & 0x00FF;
+        x = this.getX(opcode);
+        this.V[x] += this.getKK(opcode);
         this.pc += 2;
-        console.log("Adding " + (opcode & 0x00FF) + " to  V["+x+"] = " + this.V[x]);
+        console.log("Adding " + (this.getKK(opcode)) + " to  V["+x+"] = " + this.V[x]);
         break;
 
       // more data in last nibble, could be one of many instructions
@@ -235,9 +256,77 @@ var Chip8 = function() {
           // 8xy0 - LD Vx, Vy
           // Set Vx = Vy.
           case 0x0000:
-            default:
-              this.unsupportedOpcode(opcode);
-              break;
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xy1 - OR Vx, Vy
+          // Set Vx = Vx OR Vy.
+          case 0x0001:
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xy2 - AND Vx, Vy
+          // Set Vx = Vx AND Vy.
+          case 0x0002:
+            x = this.getX(opcode);
+            y = this.getY(opcode);
+            this.V[x] = this.V[x] & this.V[y];
+            this.pc += 2;
+            break;
+
+          // 8xy3 - XOR Vx, Vy
+          // Set Vx = Vx XOR Vy.
+          case 0x0003:
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xy4 - ADD Vx, Vy
+          // Set Vx = Vx + Vy, set VF = carry.
+          case 0x0004:
+          // The values of Vx and Vy are added together. If the result is greater than 8 bits (i.e., > 255,) VF is set to 1,
+          // otherwise 0. Only the lowest 8 bits of the result are kept, and stored in Vx.
+            x = this.getX(opcode);
+            y = this.getY(opcode);
+
+            if (this.V[x] + this.V[y] > 255) {
+              this.V[0xF] = 1;
+            } else {
+              this.V[0xF] = 0;
+            }
+
+            // this will drop bits that are higher than 255
+            this.V[x] = (this.V[x] + this.V[y]) & 0xFF;
+            this.pc += 2;
+            break;
+
+          // 8xy5 - SUB Vx, Vy
+          // Set Vx = Vx - Vy, set VF = NOT borrow.
+          case 0x0005:
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xy6 - SHR Vx {, Vy}
+          // Set Vx = Vx SHR 1.
+          case 0x0006:
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xy7 - SUBN Vx, Vy
+          // Set Vx = Vy - Vx, set VF = NOT borrow.
+          case 0x0007:
+          this.unsupportedOpcode(opcode);
+            break;
+
+          // 8xyE - SHL Vx {, Vy}
+          // Set Vx = Vx SHL 1.
+          case 0x000E:
+          this.unsupportedOpcode(opcode);
+            break;
+
+
+          default:
+            this.unsupportedOpcode(opcode);
+            break;
         }
         break;
 
@@ -254,11 +343,12 @@ var Chip8 = function() {
       // Set Vx = random byte AND kk.
       case 0xC000:
       // generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx.
-        x = (opcode & 0x0F00) >> 8;
-        n = opcode & 0x00FF;
-        var randomNum = Math.floor((Math.random() * 255)) & n;
+        x = this.getX(opcode);
+        kk = this.getKK(opcode);
+        var randomNum = Math.floor((Math.random() * 255)) & kk;
         this.V[x] = randomNum;
         this.pc += 2;
+        console.log('random number generated: ' + randomNum);
         break;
 
       // Dxyn - DRW Vx, Vy, nibble
@@ -270,8 +360,8 @@ var Chip8 = function() {
       // otherwise it is set to 0. If the sprite is positioned so part of it is outside the coordinates of the display, 
       // it wraps around to the opposite side of the screen.
 
-        x = this.V[(opcode & 0x0F00) >> 8];
-        y = this.V[(opcode & 0x00F0) >> 4];
+        x = this.V[this.getX(opcode)];
+        y = this.V[this.getY(opcode)];
         n = opcode & 0x000F;
 
         this.V[0xF] = 0;
@@ -295,18 +385,19 @@ var Chip8 = function() {
         }
 
         this.pc += 2;
-        console.log('Drawing at V['+((opcode & 0x0F00) >> 8)+'] = ' + x + ', V['+((opcode & 0x00F0) >> 4)+'] = ' + y);
+        console.log('Drawing at V['+(this.getX(opcode))+'] = ' + x + ', V['+(this.getY(opcode))+'] = ' + y);
         break;
 
       // multi-case
       case 0xE000:
-        switch(opcode & 0x00FF) {
+        switch(this.getKK(opcode)) {
 
           // Ex9E - SKP Vx
           // Skip next instruction if key with the value of Vx is pressed.
           case 0x009E:
             // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
-            key = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
+            key = this.V[x];
             if (this.keybuffer[key] === 1) {
               this.pc += 2;
             }
@@ -317,7 +408,8 @@ var Chip8 = function() {
           // Skip next instruction if key with the value of Vx is not pressed.
           case 0x00A1:
             // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
-            key = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
+            key = this.V[x];
             if (this.keybuffer[key] === 0) {
               this.pc += 2;
             }
@@ -332,14 +424,14 @@ var Chip8 = function() {
 
       // multi-case
       case 0xF000:
-        switch(opcode & 0x00FF) {
+        switch(this.getKK(opcode)) {
 
 
           // Fx07 - LD Vx, DT
           // Set Vx = delay timer value.
           case 0x0007:
             // The value of DT is placed into Vx.
-            x = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
             this.V[x] = this.delayTimer;
             this.pc += 2;
             console.log("V["+x+'] has been set to ' + this.delayTimer);
@@ -359,7 +451,7 @@ var Chip8 = function() {
           // Set I = location of sprite for digit Vx.
           case 0x0029:
             // The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
-            x = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
             var character = this.V[x];
             this.I = character * 5;
             console.log("setting I to character V["+x+'] = ' + this.V[x] + ' offset to 0x' + this.I.toString(16));
@@ -370,7 +462,7 @@ var Chip8 = function() {
           case 0x0033:
             // takes the decimal value of Vx, and places the hundreds digit in memory at 
             // location in I, the tens digit at location I+1, and the ones digit at location I+2.
-            x = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
             var value = this.V[x];
 
 
@@ -383,18 +475,22 @@ var Chip8 = function() {
             this.memory[this.I + 1] = tens;
             this.memory[this.I + 2] = ones;
             this.pc += 2;
-            console.log('Storing binary-encoded decimal V['+x+'] = '+this.V[(opcode & 0x0F00) >> 8] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
+            console.log('Storing binary-encoded decimal V['+x+'] = '+this.V[this.getX(opcode)] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
             break;
 
           // Fx65 - LD Vx, [I]
           // Read registers V0 through Vx from memory starting at location I.
           case 0x065:
           // read values from memory starting at location I into registers V0 through Vx.
-            x = (opcode & 0x0F00) >> 8;
+            x = this.getX(opcode);
             for (i = 0; i < x; i++) {
               this.V[i] = this.memory[this.I + i];
             }
             console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(this.I & 0xFFFF).toString(16)+']');
+
+            // not sure if this is needed
+            this.I += x + 1;
+
             this.pc += 2;
             break;
 
