@@ -3,6 +3,11 @@
 var Chip8 = function() {
   var chip = {};
 
+  // keyboard testing
+  chip.keyboarder = new Keyboarder();
+
+  chip.keyBuffer = new Uint8Array(16);
+
   /* initialize state variables */
 
   // the chip8 has 4096 bytes of ram, but I am adding an extra byte to be used as a flag for async stuff. see loadProgram
@@ -90,6 +95,18 @@ var Chip8 = function() {
       }
     };
 
+  chip.setKeyBuffer = function() {
+    for(var key in this.keyboarder.KEYS) {
+      // check if the key is being pressed, if it is, set the corresponding key in keybuffer to 1.
+      if (this.keyboarder.isDown(this.keyboarder.KEYS[key])) {
+        this.keyBuffer[key] = 1;
+        console.log('PRESSED KEY: ' + key.toString(16));
+      } else {
+        this.keyBuffer[key] = 0;
+      }
+    }
+  };
+
   /*
     Documentation for all opcodes was found here: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy0
     I copy/pasted the opcode descriptions as comments above each case in the switch below
@@ -114,7 +131,7 @@ var Chip8 = function() {
     // console.log('(memory[pc] << 8) | memory[pc + 1]: ' + (this.memory[this.pc] << 8) | this.memory[this.pc + 1]);
 
     
-    var x, y, n;
+    var x, y, n, key;
 
     // decode opcode
     switch(opcode & 0xF000) { // grab first nibble
@@ -151,6 +168,7 @@ var Chip8 = function() {
       case 0x1000:
         n = opcode & 0x0FFF;
         this.pc = n;
+        console.log('Jumping to ' + this.pc.toString(16));
         break;
 
       // 2nnn - CALL addr
@@ -219,6 +237,7 @@ var Chip8 = function() {
           case 0x0000:
             default:
               this.unsupportedOpcode(opcode);
+              break;
         }
         break;
 
@@ -229,6 +248,17 @@ var Chip8 = function() {
         this.I = opcode & 0x0FFF;
         this.pc += 2;
         console.log("Setting I to " + this.I.toString(16));
+        break;
+
+      // Cxkk - RND Vx, byte
+      // Set Vx = random byte AND kk.
+      case 0xC000:
+      // generates a random number from 0 to 255, which is then ANDed with the value kk. The results are stored in Vx.
+        x = (opcode & 0x0F00) >> 8;
+        n = opcode & 0x00FF;
+        var randomNum = Math.floor((Math.random() * 255)) & n;
+        this.V[x] = randomNum;
+        this.pc += 2;
         break;
 
       // Dxyn - DRW Vx, Vy, nibble
@@ -269,12 +299,65 @@ var Chip8 = function() {
         break;
 
       // multi-case
+      case 0xE000:
+        switch(opcode & 0x00FF) {
+
+          // Ex9E - SKP Vx
+          // Skip next instruction if key with the value of Vx is pressed.
+          case 0x009E:
+            // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the down position, PC is increased by 2.
+            key = (opcode & 0x0F00) >> 8;
+            if (this.keybuffer[key] === 1) {
+              this.pc += 2;
+            }
+            this.pc += 2;
+            break;
+
+          // ExA1 - SKNP Vx
+          // Skip next instruction if key with the value of Vx is not pressed.
+          case 0x00A1:
+            // Checks the keyboard, and if the key corresponding to the value of Vx is currently in the up position, PC is increased by 2.
+            key = (opcode & 0x0F00) >> 8;
+            if (this.keybuffer[key] === 0) {
+              this.pc += 2;
+            }
+            this.pc += 2;
+            break;
+
+          default:
+            chip.unsupportedOpcode();
+            break;
+        }
+        break;
+
+      // multi-case
       case 0xF000:
         switch(opcode & 0x00FF) {
 
+
+          // Fx07 - LD Vx, DT
+          // Set Vx = delay timer value.
+          case 0x0007:
+            // The value of DT is placed into Vx.
+            x = (opcode & 0x0F00) >> 8;
+            this.V[x] = this.delayTimer;
+            this.pc += 2;
+            console.log("V["+x+'] has been set to ' + this.delayTimer);
+            break;
+
+          // Fx15 - LD DT, Vx
+          // Set delay timer = Vx.
+          case 0x0015:
+          // DT is set equal to the value of Vx.
+            x = opcode & 0x0F00;
+            this.delayTimer = this.V[x];
+            this.pc += 2;
+            console.log("setting DT to V["+x+'] = ' + this.V[x]);
+            break;
+
           // Fx29 - LD F, Vx
           // Set I = location of sprite for digit Vx.
-          case 0x29:
+          case 0x0029:
             // The value of I is set to the location for the hexadecimal sprite corresponding to the value of Vx. 
             x = (opcode & 0x0F00) >> 8;
             var character = this.V[x];
@@ -284,11 +367,11 @@ var Chip8 = function() {
 
           // Fx33 - LD B, Vx
           // Store BCD representation of Vx in memory locations I, I+1, and I+2.
-          case 0x033:
+          case 0x0033:
             // takes the decimal value of Vx, and places the hundreds digit in memory at 
             // location in I, the tens digit at location I+1, and the ones digit at location I+2.
             x = (opcode & 0x0F00) >> 8;
-            var value = V[x];
+            var value = this.V[x];
 
 
             var hundreds = (value - (value % 100)) / 100;
