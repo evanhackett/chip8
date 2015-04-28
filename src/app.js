@@ -3,7 +3,11 @@ $( document ).ready(function() {
   var chip = new Chip8();
 
   // for now we will hardcode what file to load 
-  chip.loadProgram('pong2.c8');
+
+  // PLAYABLE!!! (doesn't mean 100% ...)
+  // chip.loadProgram('MISSILE'); 
+  // chip.loadProgram('MAZE'); 
+  // chip.loadProgram('WIPEOFF'); 
 
   chip.loadFonts();
 
