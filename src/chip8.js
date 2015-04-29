@@ -490,7 +490,7 @@ var Chip8 = function() {
             break;
 
           default:
-            chip.unsupportedOpcode();
+            this.unsupportedOpcode();
             break;
         }
         break;

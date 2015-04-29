@@ -14,7 +14,7 @@ $( document ).ready(function() {
   // chip.loadProgram('INVADERS'); 
   // chip.loadProgram('PONG'); 
   // chip.loadProgram('PUZZLE'); 
-  // chip.loadProgram('VERS'); // stuck in small loop
+  chip.loadProgram('VERS'); // stuck in small loop
 
   // gets to start screen
   // chip.loadProgram('BLITZ'); 
