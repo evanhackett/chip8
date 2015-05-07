@@ -152,6 +152,7 @@ var Chip8 = function() {
 
     '2nnn': function(opcode) {
       console.log('PC: ' + chip.pc);
+      chip.incrementPC(); // HERE LIES THE KEY TO THE INFINITE LOOP BUG! I didn't realize I needed to increment pc here.
       chip.stack.push(chip.pc);
       chip.pc = opcode & 0x0FFF;
       console.log("Calling " + chip.pc.toString(16) + ' from ' + chip.stack[chip.stack.length-1].toString(16));
@@ -287,6 +288,7 @@ var Chip8 = function() {
 
     '9xy0': function(opcode) {
       var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
       if (chip.V[x] != chip.V[y]) {
         chip.incrementPC();
       }
