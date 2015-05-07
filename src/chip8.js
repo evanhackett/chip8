@@ -34,7 +34,7 @@ var Chip8 = function() {
   chip.screenBuffer = new Uint8Array(64 * 32); 
 
   // display provides utility functions for interfacing with a graphics api
-  chip.display = new Display();
+  chip.display = Display();
 
   // display an error and stop program execution when an unsupported opcode is encountered
   chip.unsupportedOpcode = function(opcode) {
@@ -49,17 +49,14 @@ var Chip8 = function() {
     xhr.open("GET", "ROMs/"+fileName, true);
     xhr.responseType = "arraybuffer";
 
-    // to get around 'this' binding issues
-    memory = this.memory;
-
     xhr.onload = function () {
       // loaded flag to prevent async from ruining my day
-      memory[4096] = true;
+      chip.memory[4096] = true;
        var program = new Uint8Array(xhr.response);
        for (var i = 0; i < program.length; i++) {
         // load program into memory, starting at address 0x200
         // this is a convention from old times when chip8's typically stored the interpreter itself in memory from 0x0-0x200
-        memory[0x200 + i] = program[i];
+        chip.memory[0x200 + i] = program[i];
       }
     };
 
@@ -90,18 +87,18 @@ var Chip8 = function() {
       ];
 
       for (var i = 0; i < fonts.length; i++) {
-        this.memory[i] = fonts[i];
+        chip.memory[i] = fonts[i];
       }
     };
 
   chip.setKeyBuffer = function() {
-    for(var key in this.keyboarder.KEYS) {
+    for(var key in chip.keyboarder.KEYS) {
       // check if the key is being pressed, if it is, set the corresponding key in keybuffer to 1.
-      if (this.keyboarder.isDown(this.keyboarder.KEYS[key])) {
-        this.keyBuffer[key] = 1;
+      if (chip.keyboarder.isDown(chip.keyboarder.KEYS[key])) {
+        chip.keyBuffer[key] = 1;
         console.log('PRESSED KEY: ' + key.toString(16));
       } else {
-        this.keyBuffer[key] = 0;
+        chip.keyBuffer[key] = 0;
       }
     }
   };
@@ -123,7 +120,7 @@ var Chip8 = function() {
 
   // used to increment the program counter when ready for next instruction
   chip.incrementPC = function() {
-    this.pc += 2;
+    chip.pc += 2;
   };
 
   /*
@@ -134,197 +131,197 @@ var Chip8 = function() {
   // object that stores all opcodes with their corresponding function
   chip.opcodes = {
     '00E0': function(opcode) {
-      for (i = 0; i < this.screenBuffer.length; i++) {
-        this.screenBuffer[i] = 0;
+      for (i = 0; i < chip.screenBuffer.length; i++) {
+        chip.screenBuffer[i] = 0;
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     '00EE': function(opcode) {
       // LOOK INTO THIS:
-      // console.log(this.stack); // stack is totally empty... so pc gets set to 0 + 2 = 2
-      this.pc = this.stack.pop();
-      console.log('Returning to ' + this.pc.toString(16));
-    }.bind(chip),
+      // console.log(chip.stack); // stack is totally empty... so pc gets set to 0 + 2 = 2
+      chip.pc = chip.stack.pop();
+      console.log('Returning to ' + chip.pc.toString(16));
+    },
 
     '1nnn': function(opcode) {
       n = opcode & 0x0FFF;
-      this.pc = n;
-      console.log('Jumping to ' + this.pc.toString(16));
-    }.bind(chip),
+      chip.pc = n;
+      console.log('Jumping to ' + chip.pc.toString(16));
+    },
 
     '2nnn': function(opcode) {
-      console.log('PC: ' + this.pc);
-      this.stack.push(this.pc);
-      this.pc = opcode & 0x0FFF;
-      console.log("Calling " + this.pc.toString(16) + ' from ' + this.stack[this.stack.length-1].toString(16));
-    }.bind(chip),
+      console.log('PC: ' + chip.pc);
+      chip.stack.push(chip.pc);
+      chip.pc = opcode & 0x0FFF;
+      console.log("Calling " + chip.pc.toString(16) + ' from ' + chip.stack[chip.stack.length-1].toString(16));
+    },
 
     '3xkk': function(opcode) {
-      var x = this.getX(opcode);
-      var kk = this.getKK(opcode);
-      if (this.V[x] === kk) {
-        this.incrementPC();
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      var kk = chip.getKK(opcode);
+      if (chip.V[x] === kk) {
+        chip.incrementPC();
+        chip.incrementPC();
         console.log('Skipping next instruction, V['+x+'] === ' + kk);
       } else {
-        this.incrementPC();
+        chip.incrementPC();
         console.log('Not skipping next instruction, V['+x+'] !== ' + kk);
       }
-    }.bind(chip),
+    },
 
     '4xkk': function(opcode) {
-      var x = this.getX(opcode);
-      var kk = this.getKK(opcode);
-      if (this.V[x] !== kk) {
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      var kk = chip.getKK(opcode);
+      if (chip.V[x] !== kk) {
+        chip.incrementPC();
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     '5xy0': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      if (this.V[x] === this.V[y]) {
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      if (chip.V[x] === chip.V[y]) {
+        chip.incrementPC();
       }
-    }.bind(chip),
+    },
 
     '6xkk': function(opcode) {
-      var x = this.getX(opcode);
-      this.V[x] = this.getKK(opcode);
-      this.incrementPC();
-      console.log("Setting V["+x+"] to " + this.V[x]);
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.V[x] = chip.getKK(opcode);
+      chip.incrementPC();
+      console.log("Setting V["+x+"] to " + chip.V[x]);
+    },
 
     '7xkk': function(opcode) {
-      var x = this.getX(opcode);
-      this.V[x] += this.getKK(opcode);
-      this.incrementPC();
-      console.log("Adding " + (this.getKK(opcode)) + " to  V["+x+"] = " + this.V[x]);
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.V[x] += chip.getKK(opcode);
+      chip.incrementPC();
+      console.log("Adding " + (chip.getKK(opcode)) + " to  V["+x+"] = " + chip.V[x]);
+    },
 
     '8xy0': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      this.V[x] = this.V[y];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      chip.V[x] = chip.V[y];
+      chip.incrementPC();
+    },
 
     '8xy1': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      this.V[x] = this.V[x] | this.V[y];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      chip.V[x] = chip.V[x] | chip.V[y];
+      chip.incrementPC();
+    },
 
     '8xy2': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      this.V[x] = this.V[x] & this.V[y];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      chip.V[x] = chip.V[x] & chip.V[y];
+      chip.incrementPC();
+    },
 
     '8xy3': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      this.V[x] = this.V[x] ^ this.V[y];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      chip.V[x] = chip.V[x] ^ chip.V[y];
+      chip.incrementPC();
+    },
 
     '8xy4': function(opcode) {
-        var x = this.getX(opcode);
-        var y = this.getY(opcode);
+        var x = chip.getX(opcode);
+        var y = chip.getY(opcode);
 
-        if (this.V[x] + this.V[y] > 255) {
-          this.V[0xF] = 1;
+        if (chip.V[x] + chip.V[y] > 255) {
+          chip.V[0xF] = 1;
         } else {
-          this.V[0xF] = 0;
+          chip.V[0xF] = 0;
         }
         // this will drop bits that are higher than 255
-        this.V[x] = (this.V[x] + this.V[y]) & 0xFF;
-        this.incrementPC();
-    }.bind(chip),
+        chip.V[x] = (chip.V[x] + chip.V[y]) & 0xFF;
+        chip.incrementPC();
+    },
 
     '8xy5': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
 
-      if (this.V[x] > this.V[y]) {
-        this.V[0xF] = 1;
+      if (chip.V[x] > chip.V[y]) {
+        chip.V[0xF] = 1;
       } else {
-        this.V[0xF] = 0;
+        chip.V[0xF] = 0;
       }
 
-      this.V[x] = (this.V[x] - this.V[y]) & 0xFF;
+      chip.V[x] = (chip.V[x] - chip.V[y]) & 0xFF;
 
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     '8xy6': function(opcode) {
-      var x = this.getX(opcode);
-      this.V[0xF] = this.V[x] & 0x01;
-      this.V[x] = this.V[x] >> 1;
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.V[0xF] = chip.V[x] & 0x01;
+      chip.V[x] = chip.V[x] >> 1;
+      chip.incrementPC();
+    },
 
     '8xy7': function(opcode) {
-      var x = this.getX(opcode);
-      var y = this.getY(opcode);
-      if (this.V[x] > this.V[y]) {
-        this.V[0xF] = 0;
+      var x = chip.getX(opcode);
+      var y = chip.getY(opcode);
+      if (chip.V[x] > chip.V[y]) {
+        chip.V[0xF] = 0;
       } else {
-        this.V[0xF] = 1;
+        chip.V[0xF] = 1;
       }
 
-      this.V[x] = this.V[y] - this.V[x];
-      this.incrementPC();
-    }.bind(chip),
+      chip.V[x] = chip.V[y] - chip.V[x];
+      chip.incrementPC();
+    },
 
     '8xyE': function(opcode) {
-      var x = this.getX(opcode);
-      this.V[0xF] = this.V[x] & 0x80;
-      this.V[x] = this.V[x] << 1;
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.V[0xF] = chip.V[x] & 0x80;
+      chip.V[x] = chip.V[x] << 1;
+      chip.incrementPC();
+    },
 
     '9xy0': function(opcode) {
-      var x = this.getX(opcode);
-      if (this.V[x] != this.V[y]) {
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      if (chip.V[x] != chip.V[y]) {
+        chip.incrementPC();
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     'Annn': function(opcode) {
-      this.I = opcode & 0x0FFF;
-      this.incrementPC();
-      console.log("Setting I to " + this.I.toString(16));
-    }.bind(chip),
+      chip.I = opcode & 0x0FFF;
+      chip.incrementPC();
+      console.log("Setting I to " + chip.I.toString(16));
+    },
 
     'Bnnn': function(opcode) {
       var n = (opcode & 0x0FFF);
-      this.pc = n + this.V[0];
-    }.bind(chip),
+      chip.pc = n + chip.V[0];
+    },
 
     'Cxkk': function(opcode) {
-      var x = this.getX(opcode);
-      var kk = this.getKK(opcode);
+      var x = chip.getX(opcode);
+      var kk = chip.getKK(opcode);
       var randomNum = Math.floor((Math.random() * 255)) & kk;
-      this.V[x] = randomNum;
-      this.incrementPC();
+      chip.V[x] = randomNum;
+      chip.incrementPC();
       console.log('random number generated: ' + randomNum);
-    }.bind(chip),
+    },
 
     'Dxyn': function(opcode) {
-      var x = this.V[this.getX(opcode)];
-      var y = this.V[this.getY(opcode)];
+      var x = chip.V[chip.getX(opcode)];
+      var y = chip.V[chip.getY(opcode)];
       var n = opcode & 0x000F;
 
-      this.V[0xF] = 0;
+      chip.V[0xF] = 0;
 
       for (var i = 0; i < n; i++) {
-        var line = this.memory[this.I + i];
+        var line = chip.memory[chip.I + i];
         for (var j = 0; j < 8; j++) {
           var pixel = line & (0x80 >> j);
           if (pixel !== 0) {
@@ -337,132 +334,132 @@ var Chip8 = function() {
 
             var index = totalY * 64 + totalX;
 
-            if (this.screenBuffer[index] === 1) {
-              this.V[0xF] = 1;
+            if (chip.screenBuffer[index] === 1) {
+              chip.V[0xF] = 1;
             }
 
-            this.screenBuffer[index] ^= 1;
+            chip.screenBuffer[index] ^= 1;
           }
         }
       }
 
-      this.incrementPC();
-      console.log('Drawing at V['+(this.getX(opcode))+'] = ' + x + ', V['+(this.getY(opcode))+'] = ' + y);
-    }.bind(chip),
+      chip.incrementPC();
+      console.log('Drawing at V['+(chip.getX(opcode))+'] = ' + x + ', V['+(chip.getY(opcode))+'] = ' + y);
+    },
 
     'Ex9E': function(opcode) {
-      var x = this.getX(opcode);
-      key = this.V[x];
-      if (this.keyBuffer[key] === 1) {
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      key = chip.V[x];
+      if (chip.keyBuffer[key] === 1) {
+        chip.incrementPC();
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     'ExA1': function(opcode) {
-      var x = this.getX(opcode);
-      var key = this.V[x];
-      if (this.keyBuffer[key] === 0) {
-        this.incrementPC();
+      var x = chip.getX(opcode);
+      var key = chip.V[x];
+      if (chip.keyBuffer[key] === 0) {
+        chip.incrementPC();
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     'Fx07': function(opcode) {
-      var x = this.getX(opcode);
-      this.V[x] = this.delayTimer;
-      this.incrementPC();
-      console.log("V["+x+'] has been set to ' + this.delayTimer);
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.V[x] = chip.delayTimer;
+      chip.incrementPC();
+      console.log("V["+x+'] has been set to ' + chip.delayTimer);
+    },
 
     'Fx0A': function(opcode) {
-      var x = this.getX(opcode);
-      for(var i = 0; i < this.keyBuffer.length; i++) {
-        if(this.keyBuffer[i] === 1) {
-          this.V[x] = i;
-          this.incrementPC();
+      var x = chip.getX(opcode);
+      for(var i = 0; i < chip.keyBuffer.length; i++) {
+        if(chip.keyBuffer[i] === 1) {
+          chip.V[x] = i;
+          chip.incrementPC();
           break;
         }
       }
-    }.bind(chip),
+    },
 
     'Fx15': function(opcode) {
       var x = opcode & 0x0F00;
-      this.delayTimer = this.V[x];
-      this.incrementPC();
-      console.log("setting DT to V["+x+'] = ' + this.V[x]);
-    }.bind(chip),
+      chip.delayTimer = chip.V[x];
+      chip.incrementPC();
+      console.log("setting DT to V["+x+'] = ' + chip.V[x]);
+    },
 
     'Fx18': function(opcode) {
-      var x = this.getX(opcode);
-      this.soundTimer = this.V[x];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.soundTimer = chip.V[x];
+      chip.incrementPC();
+    },
 
     'Fx1E': function(opcode) {
-      var x = this.getX(opcode);
-      this.I += this.V[x];
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      chip.I += chip.V[x];
+      chip.incrementPC();
+    },
 
     'Fx29': function(opcode) {
-      var x = this.getX(opcode);
-      var character = this.V[x];
-      this.I = character * 5;
-      console.log("setting I to character V["+x+'] = ' + this.V[x] + ' offset to 0x' + this.I.toString(16));
-      this.incrementPC();
-    }.bind(chip),
+      var x = chip.getX(opcode);
+      var character = chip.V[x];
+      chip.I = character * 5;
+      console.log("setting I to character V["+x+'] = ' + chip.V[x] + ' offset to 0x' + chip.I.toString(16));
+      chip.incrementPC();
+    },
 
     'Fx33': function(opcode) {
-      var x = this.getX(opcode);
-      var value = this.V[x];
+      var x = chip.getX(opcode);
+      var value = chip.V[x];
 
       var hundreds = (value - (value % 100)) / 100;
       value -= hundreds * 100;
       var tens = (value - (value % 10)) / 10;
       value -= tens * 10;
       var ones = value;
-      this.memory[this.I] = hundreds;
-      this.memory[this.I + 1] = tens;
-      this.memory[this.I + 2] = ones;
-      this.incrementPC();
-      console.log('Storing binary-encoded decimal V['+x+'] = '+this.V[this.getX(opcode)] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
-    }.bind(chip),
+      chip.memory[chip.I] = hundreds;
+      chip.memory[chip.I + 1] = tens;
+      chip.memory[chip.I + 2] = ones;
+      chip.incrementPC();
+      console.log('Storing binary-encoded decimal V['+x+'] = '+chip.V[chip.getX(opcode)] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
+    },
 
     'Fx55': function(opcode) {
-      var x = this.getX(opcode);
+      var x = chip.getX(opcode);
       for (var i = 0; i <= x; i++) {
-        this.memory[this.I + i] = this.V[i];
+        chip.memory[chip.I + i] = chip.V[i];
       }
-      this.incrementPC();
-    }.bind(chip),
+      chip.incrementPC();
+    },
 
     'Fx65': function(opcode) {
-      var x = this.getX(opcode);
+      var x = chip.getX(opcode);
       // note: <= not <
       for (var i = 0; i <= x; i++) {
-        this.V[i] = this.memory[this.I + i];
+        chip.V[i] = chip.memory[chip.I + i];
       }
-      console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(this.I & 0xFFFF).toString(16)+']');
+      console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(chip.I & 0xFFFF).toString(16)+']');
 
       // not sure if this is needed
-      this.I += x + 1;
+      chip.I += x + 1;
 
-      this.incrementPC();
-    }.bind(chip)
+      chip.incrementPC();
+    }
 
   };
 
   chip.run = function() {
     // check loaded flag
-    if(!this.memory[4096]) {
-      setTimeout(this.run.bind(this), 1000);
+    if(!chip.memory[4096]) {
+      setTimeout(chip.run.bind(this), 1000);
       return;
     }
 
     // fetch opcode
     // each opcode is 2 bytes. Here we grab 2 bytes from memory and merge them together with a left shift and a bitwise 'OR'.
-    var opcode = (this.memory[this.pc] << 8) | this.memory[this.pc + 1];
+    var opcode = (chip.memory[chip.pc] << 8) | chip.memory[chip.pc + 1];
 
     console.log('opcode: ' + opcode.toString(16));
 
@@ -476,18 +473,18 @@ var Chip8 = function() {
           // 00E0 - CLS
           // clear screen
           case 0x00E0:
-            this.opcodes['00E0'](opcode);
+            chip.opcodes['00E0'](opcode);
             break;
 
           // 00EE - RET
           // Return from a subroutine.
           case 0x00EE:
-            this.opcodes['00EE'](opcode);
+            chip.opcodes['00EE'](opcode);
             break;
 
           // 0NNN (don't need to implement this)
           default:
-            this.unsupportedOpcode(opcode);
+            chip.unsupportedOpcode(opcode);
             break;
         }
         break;
@@ -495,43 +492,43 @@ var Chip8 = function() {
       // 1nnn - JP addr
       // Jump to location nnn.
       case 0x1000:
-        this.opcodes['1nnn'](opcode);
+        chip.opcodes['1nnn'](opcode);
         break;
 
       // 2nnn - CALL addr
       // Call subroutine at nnn.
       case 0x2000:
-        this.opcodes['2nnn'](opcode);
+        chip.opcodes['2nnn'](opcode);
         break;
 
       // 3xkk - SE Vx, byte
       // Skip next instruction if Vx = kk.
       case 0x3000:
-        this.opcodes['3xkk'](opcode);
+        chip.opcodes['3xkk'](opcode);
         break;
 
       // 4xkk - SNE Vx, byte
       // Skip next instruction if Vx != kk.
       case 0x4000:
-        this.opcodes['4xkk'](opcode);
+        chip.opcodes['4xkk'](opcode);
         break;
 
       // 5xy0 - SE Vx, Vy
       // Skip next instruction if Vx = Vy.
       case 0x5000:
-        this.opcodes['5xy0'](opcode);
+        chip.opcodes['5xy0'](opcode);
         break;
 
       // 6xkk - LD Vx, byte
       // Set Vx = kk.
       case 0x6000:
-        this.opcodes['6xkk'](opcode);
+        chip.opcodes['6xkk'](opcode);
         break;
 
       // 7xkk - ADD Vx, byte
       // Set Vx = Vx + kk.
       case 0x7000:
-        this.opcodes['7xkk'](opcode);
+        chip.opcodes['7xkk'](opcode);
         break;
 
       // more data in last nibble, could be one of many instructions
@@ -541,60 +538,60 @@ var Chip8 = function() {
           // 8xy0 - LD Vx, Vy
           // Set Vx = Vy.
           case 0x0000:
-            this.opcodes['8xy0'](opcode);
+            chip.opcodes['8xy0'](opcode);
             break;
 
           // 8xy1 - OR Vx, Vy
           // Set Vx = Vx OR Vy.
           case 0x0001:
-            this.opcodes['8xy1'](opcode);
+            chip.opcodes['8xy1'](opcode);
             break;
 
           // 8xy2 - AND Vx, Vy
           // Set Vx = Vx AND Vy.
           case 0x0002:
-            this.opcodes['8xy2'](opcode);
+            chip.opcodes['8xy2'](opcode);
             break;
 
           // 8xy3 - XOR Vx, Vy
           // Set Vx = Vx XOR Vy.
           case 0x0003:
-            this.opcodes['8xy3'](opcode);
+            chip.opcodes['8xy3'](opcode);
             break;
 
           // 8xy4 - ADD Vx, Vy
           // Set Vx = Vx + Vy, set VF = carry.
           case 0x0004:
-            this.opcodes['8xy4'](opcode);
+            chip.opcodes['8xy4'](opcode);
             break;
 
           // 8xy5 - SUB Vx, Vy
           // Set Vx = Vx - Vy, set VF = NOT borrow.
           case 0x0005:
-            this.opcodes['8xy5'](opcode);
+            chip.opcodes['8xy5'](opcode);
             break;
 
           // 8xy6 - SHR Vx {, Vy}
           // Set Vx = Vx SHR 1.
           case 0x0006:
-            this.opcodes['8xy6'](opcode);
+            chip.opcodes['8xy6'](opcode);
             break;
 
           // 8xy7 - SUBN Vx, Vy
           // Set Vx = Vy - Vx, set VF = NOT borrow.
           case 0x0007:
-            this.opcodes['8xy7'](opcode);
+            chip.opcodes['8xy7'](opcode);
             break;
 
           // 8xyE - SHL Vx {, Vy}
           // Set Vx = Vx SHL 1.
           case 0x000E:
-            this.opcodes['8xyE'](opcode);
+            chip.opcodes['8xyE'](opcode);
             break;
 
 
           default:
-            this.unsupportedOpcode(opcode);
+            chip.unsupportedOpcode(opcode);
             break;
         }
         break;
@@ -602,131 +599,131 @@ var Chip8 = function() {
       // 9xy0 - SNE Vx, Vy
       // Skip next instruction if Vx != Vy.
       case 0x9000:
-        this.opcodes['9xy0'](opcode);
+        chip.opcodes['9xy0'](opcode);
         break;
 
       // Annn - LD I, addr
       // Set I = nnn.
       case 0xA000:
-        this.opcodes['Annn'](opcode);
+        chip.opcodes['Annn'](opcode);
         break;
 
       // Bnnn - JP V0, addr
       // Jump to location nnn + V0.
       case 0xB000:
-        this.opcodes['Bnnn'](opcode);
+        chip.opcodes['Bnnn'](opcode);
         break;
 
       // Cxkk - RND Vx, byte
       // Set Vx = random byte AND kk.
       case 0xC000:
-        this.opcodes['Cxkk'](opcode);
+        chip.opcodes['Cxkk'](opcode);
         break;
 
       // Dxyn - DRW Vx, Vy, nibble
       // Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
       case 0xD000:
-        this.opcodes['Dxyn'](opcode);
+        chip.opcodes['Dxyn'](opcode);
         break;
 
       // multi-case
       case 0xE000:
-        switch(this.getKK(opcode)) {
+        switch(chip.getKK(opcode)) {
 
           // Ex9E - SKP Vx
           // Skip next instruction if key with the value of Vx is pressed.
           case 0x009E:
-            this.opcodes['Ex9E'](opcode);
+            chip.opcodes['Ex9E'](opcode);
             break;
 
           // ExA1 - SKNP Vx
           // Skip next instruction if key with the value of Vx is not pressed.
           case 0x00A1:
-            this.opcodes['ExA1'](opcode);
+            chip.opcodes['ExA1'](opcode);
             break;
 
           default:
-            this.unsupportedOpcode();
+            chip.unsupportedOpcode();
             break;
         }
         break;
 
       // multi-case
       case 0xF000:
-        switch(this.getKK(opcode)) {
+        switch(chip.getKK(opcode)) {
 
 
           // Fx07 - LD Vx, DT
           // Set Vx = delay timer value.
           case 0x0007:
-            this.opcodes['Fx07'](opcode);
+            chip.opcodes['Fx07'](opcode);
             break;
 
           // Fx0A - LD Vx, K
           // Wait for a key press, store the value of the key in Vx.
           case 0x000A:
-            this.opcodes['Fx0A'](opcode);
+            chip.opcodes['Fx0A'](opcode);
             break;
 
 
           // Fx15 - LD DT, Vx
           // Set delay timer = Vx.
           case 0x0015:
-            this.opcodes['Fx15'](opcode);
+            chip.opcodes['Fx15'](opcode);
             break;
 
           // Fx18 - LD ST, Vx
           // Set sound timer = Vx.
           case 0x0018:
-            this.opcodes['Fx18'](opcode);
+            chip.opcodes['Fx18'](opcode);
             break;
 
           // Fx1E - ADD I, Vx
           // Set I = I + Vx.
           case 0x001E:
-            this.opcodes['Fx1E'](opcode);
+            chip.opcodes['Fx1E'](opcode);
             break;
 
           // Fx29 - LD F, Vx
           // Set I = location of sprite for digit Vx.
           case 0x0029:
-            this.opcodes['Fx29'](opcode);
+            chip.opcodes['Fx29'](opcode);
             break;
 
           // Fx33 - LD B, Vx
           // Store BCD representation of Vx in memory locations I, I+1, and I+2.
           case 0x0033:
-            this.opcodes['Fx33'](opcode);
+            chip.opcodes['Fx33'](opcode);
             break;
 
 
           // Fx55 - LD [I], Vx
           // Store registers V0 through Vx in memory starting at location I.
           case 0x0055:
-            this.opcodes['Fx55'](opcode);
+            chip.opcodes['Fx55'](opcode);
             break;
 
           // Fx65 - LD Vx, [I]
           // Read registers V0 through Vx from memory starting at location I.
           case 0x065:
-            this.opcodes['Fx65'](opcode);
+            chip.opcodes['Fx65'](opcode);
             break;
 
           default:
-            this.unsupportedOpcode(opcode);
+            chip.unsupportedOpcode(opcode);
         }
         break;
 
       default:
-        this.unsupportedOpcode(opcode);
+        chip.unsupportedOpcode(opcode);
     }
   
-    if (this.soundTimer > 0) {
-      this.soundTimer--;
+    if (chip.soundTimer > 0) {
+      chip.soundTimer--;
       // this is where you would play a beep sound
     }
-    if (this.delayTimer > 0) {
-      this.delayTimer--;
+    if (chip.delayTimer > 0) {
+      chip.delayTimer--;
     }
   };
 
