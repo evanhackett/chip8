@@ -154,9 +154,7 @@ var Chip8 = function() {
     }.bind(chip),
 
     '2nnn': function(opcode) {
-      console.log(this.pc);
-      // this.stack[this.stackPointer] = this.pc;
-      // this.stackPointer++;
+      console.log('PC: ' + this.pc);
       this.stack.push(this.pc);
       this.pc = opcode & 0x0FFF;
       console.log("Calling " + this.pc.toString(16) + ' from ' + this.stack[this.stack.length-1].toString(16));
@@ -418,7 +416,6 @@ var Chip8 = function() {
     'Fx33': function(opcode) {
       var x = this.getX(opcode);
       var value = this.V[x];
-
 
       var hundreds = (value - (value % 100)) / 100;
       value -= hundreds * 100;
