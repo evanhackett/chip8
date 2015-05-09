@@ -96,7 +96,7 @@ var Chip8 = function() {
       // check if the key is being pressed, if it is, set the corresponding key in keybuffer to 1.
       if (chip.keyboarder.isDown(chip.keyboarder.KEYS[key])) {
         chip.keyBuffer[key] = 1;
-        console.log('PRESSED KEY: ' + key.toString(16));
+        // console.log('PRESSED KEY: ' + key.toString(16));
       } else {
         chip.keyBuffer[key] = 0;
       }
@@ -141,21 +141,21 @@ var Chip8 = function() {
       // LOOK INTO THIS:
       // console.log(chip.stack); // stack is totally empty... so pc gets set to 0 + 2 = 2
       chip.pc = chip.stack.pop();
-      console.log('Returning to ' + chip.pc.toString(16));
+      // console.log('Returning to ' + chip.pc.toString(16));
     },
 
     '1nnn': function(opcode) {
       n = opcode & 0x0FFF;
       chip.pc = n;
-      console.log('Jumping to ' + chip.pc.toString(16));
+      // console.log('Jumping to ' + chip.pc.toString(16));
     },
 
     '2nnn': function(opcode) {
-      console.log('PC: ' + chip.pc);
+      // console.log('PC: ' + chip.pc);
       chip.incrementPC(); // HERE LIES THE KEY TO THE INFINITE LOOP BUG! I didn't realize I needed to increment pc here.
       chip.stack.push(chip.pc);
       chip.pc = opcode & 0x0FFF;
-      console.log("Calling " + chip.pc.toString(16) + ' from ' + chip.stack[chip.stack.length-1].toString(16));
+      // console.log("Calling " + chip.pc.toString(16) + ' from ' + chip.stack[chip.stack.length-1].toString(16));
     },
 
     '3xkk': function(opcode) {
@@ -164,10 +164,10 @@ var Chip8 = function() {
       if (chip.V[x] === kk) {
         chip.incrementPC();
         chip.incrementPC();
-        console.log('Skipping next instruction, V['+x+'] === ' + kk);
+        // console.log('Skipping next instruction, V['+x+'] === ' + kk);
       } else {
         chip.incrementPC();
-        console.log('Not skipping next instruction, V['+x+'] !== ' + kk);
+        // console.log('Not skipping next instruction, V['+x+'] !== ' + kk);
       }
     },
 
@@ -192,14 +192,14 @@ var Chip8 = function() {
       var x = chip.getX(opcode);
       chip.V[x] = chip.getKK(opcode);
       chip.incrementPC();
-      console.log("Setting V["+x+"] to " + chip.V[x]);
+      // console.log("Setting V["+x+"] to " + chip.V[x]);
     },
 
     '7xkk': function(opcode) {
       var x = chip.getX(opcode);
       chip.V[x] += chip.getKK(opcode);
       chip.incrementPC();
-      console.log("Adding " + (chip.getKK(opcode)) + " to  V["+x+"] = " + chip.V[x]);
+      // console.log("Adding " + (chip.getKK(opcode)) + " to  V["+x+"] = " + chip.V[x]);
     },
 
     '8xy0': function(opcode) {
@@ -298,7 +298,7 @@ var Chip8 = function() {
     'Annn': function(opcode) {
       chip.I = opcode & 0x0FFF;
       chip.incrementPC();
-      console.log("Setting I to " + chip.I.toString(16));
+      // console.log("Setting I to " + chip.I.toString(16));
     },
 
     'Bnnn': function(opcode) {
@@ -312,7 +312,7 @@ var Chip8 = function() {
       var randomNum = Math.floor((Math.random() * 255)) & kk;
       chip.V[x] = randomNum;
       chip.incrementPC();
-      console.log('random number generated: ' + randomNum);
+      // console.log('random number generated: ' + randomNum);
     },
 
     'Dxyn': function(opcode) {
@@ -346,7 +346,7 @@ var Chip8 = function() {
       }
 
       chip.incrementPC();
-      console.log('Drawing at V['+(chip.getX(opcode))+'] = ' + x + ', V['+(chip.getY(opcode))+'] = ' + y);
+      // console.log('Drawing at V['+(chip.getX(opcode))+'] = ' + x + ', V['+(chip.getY(opcode))+'] = ' + y);
     },
 
     'Ex9E': function(opcode) {
@@ -371,7 +371,7 @@ var Chip8 = function() {
       var x = chip.getX(opcode);
       chip.V[x] = chip.delayTimer;
       chip.incrementPC();
-      console.log("V["+x+'] has been set to ' + chip.delayTimer);
+      // console.log("V["+x+'] has been set to ' + chip.delayTimer);
     },
 
     'Fx0A': function(opcode) {
@@ -389,7 +389,7 @@ var Chip8 = function() {
       var x = opcode & 0x0F00;
       chip.delayTimer = chip.V[x];
       chip.incrementPC();
-      console.log("setting DT to V["+x+'] = ' + chip.V[x]);
+      // console.log("setting DT to V["+x+'] = ' + chip.V[x]);
     },
 
     'Fx18': function(opcode) {
@@ -408,7 +408,7 @@ var Chip8 = function() {
       var x = chip.getX(opcode);
       var character = chip.V[x];
       chip.I = character * 5;
-      console.log("setting I to character V["+x+'] = ' + chip.V[x] + ' offset to 0x' + chip.I.toString(16));
+      // console.log("setting I to character V["+x+'] = ' + chip.V[x] + ' offset to 0x' + chip.I.toString(16));
       chip.incrementPC();
     },
 
@@ -425,7 +425,7 @@ var Chip8 = function() {
       chip.memory[chip.I + 1] = tens;
       chip.memory[chip.I + 2] = ones;
       chip.incrementPC();
-      console.log('Storing binary-encoded decimal V['+x+'] = '+chip.V[chip.getX(opcode)] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
+      // console.log('Storing binary-encoded decimal V['+x+'] = '+chip.V[chip.getX(opcode)] + 'as {' + hundreds + ', ' + tens + ' , ' + ones + '}');
     },
 
     'Fx55': function(opcode) {
@@ -442,7 +442,7 @@ var Chip8 = function() {
       for (var i = 0; i <= x; i++) {
         chip.V[i] = chip.memory[chip.I + i];
       }
-      console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(chip.I & 0xFFFF).toString(16)+']');
+      // console.log('Setting V[0] to V['+x+'] to the values in memory[0x'+(chip.I & 0xFFFF).toString(16)+']');
 
       // not sure if this is needed
       chip.I += x + 1;
@@ -463,7 +463,7 @@ var Chip8 = function() {
     // each opcode is 2 bytes. Here we grab 2 bytes from memory and merge them together with a left shift and a bitwise 'OR'.
     var opcode = (chip.memory[chip.pc] << 8) | chip.memory[chip.pc + 1];
 
-    console.log('opcode: ' + opcode.toString(16));
+    // console.log('opcode: ' + opcode.toString(16));
 
     // decode opcode
     switch(opcode & 0xF000) { // grab first nibble
