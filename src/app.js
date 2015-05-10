@@ -6,15 +6,23 @@ $( document ).ready(function() {
     chip.loadFonts();
     chip.loadProgram(selectedROM); 
 
-    var tick = function() {
+
+    var process = function() {
       chip.setKeyBuffer();
       chip.run();
-      chip.display.render(chip.screenBuffer);
-      requestAnimationFrame(tick);
+      setTimeout(process, 1);
     };
 
-    tick();
+   
 
+    var draw = function() {
+      chip.display.render(chip.screenBuffer);
+      requestAnimationFrame(draw);
+    };
+
+   process();
+   draw();
+    
   });
 });
 

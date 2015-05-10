@@ -123,6 +123,7 @@ var Chip8 = function() {
     chip.pc += 2;
   };
 
+
   /*
     Documentation for all opcodes was found here: http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy0
     I copy/pasted the opcode descriptions as comments above each case in the main run switch
@@ -316,6 +317,9 @@ var Chip8 = function() {
     },
 
     'Dxyn': function(opcode) {
+      // tell chip it needs to render since it is drawing
+      chip.needsRender = true;
+
       var x = chip.V[chip.getX(opcode)];
       var y = chip.V[chip.getY(opcode)];
       var n = opcode & 0x000F;
