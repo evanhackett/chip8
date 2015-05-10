@@ -10,7 +10,8 @@ $( document ).ready(function() {
     var process = function() {
       chip.setKeyBuffer();
       chip.run();
-      setTimeout(process, 1);
+      chip.run();
+      setTimeout(process, 0);
     };
 
    
