@@ -10,7 +10,7 @@ $( document ).ready(function() {
     var process = function() {
       chip.setKeyBuffer();
       chip.run();
-      chip.run();
+      // chip.run(); more of these makes it go faster, but too fast in some ways
       setTimeout(process, 0);
     };
 
