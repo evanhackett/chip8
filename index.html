@@ -20,16 +20,38 @@
     <h1>Chip-8 Emulator</h1>
   </header>
 
-  <nav></nav>
-
   <main>
     <!-- width and height are hardcoded right now, maybe later make this adjustable -->
     <canvas id="chip8Screen" width="640" height="320"></canvas>
+
+    <select id="romSelect">
+      <option selected="selected">Choose a ROM</option>
+      <option value="PONG">PONG</option>
+      <option value="PONG2">PONG2</option>
+      <option value="MISSILE">MISSILE</option>
+      <option value="UFO">UFO</option>
+      <option value="TANK">TANK</option>
+      <option value="WIPEOFF">WIPEOFF</option>
+      <option value="CONNECT4">CONNECT4</option>
+      <option value="SYZYGY">SYZGY</option>
+      <option value="MAZE">MAZE</option>
+      <option value="TETRIS">TETRIS</option>
+      <option value="MERLIN">MERLIN</option>
+      <option value="KALEID">KALEID</option>
+      <option value="VERS">VERS</option>
+      <option value="PUZZLE">PUZZLE</option>
+      <option value="BLITZ">BLITZ</option>
+      <option value="15PUZZLE">15PUZZLE</option>
+      <option value="BRIX">BRIX</option>
+      <option value="HIDDEN">HIDDEN</option>
+      <option value="INVADERS">INVADERS</option>
+      <option value="VBRIX">VBRIX</option>
+      <option value="BLINKY">BLINKY</option>
+      <option value="GUESS">GUESS</option>
+    </select>
+
+    <p>The chip-8 has 16 input buttons. There are 4 rows of 4 buttons. These buttons are represented by keys on your keyboard: 1234, QWER, ASDF, ZXCV.</p>
   </main>
-
-  <aside></aside>
-
-  <footer></footer>
 
 </body>
 </html>
