@@ -1,2 +1,5 @@
-#solo
-This is a project I completed as a student at [hackreactor](http://hackreactor.com). This project was the 'solo' project (the only project we didn't work on with a partner).
+#Chip8
+
+Emulator for the 8-bit game "console": [CHIP-8](https://en.wikipedia.org/wiki/CHIP-8)
+
+See online: http://evanhackett.com/chip8/
