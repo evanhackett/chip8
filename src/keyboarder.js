@@ -1,4 +1,4 @@
-var Keyboarder = function() {
+module.exports = function() {
   var keyState = {};
 
   window.onkeydown = function(e) {
@@ -8,7 +8,6 @@ var Keyboarder = function() {
   window.onkeyup = function(e) {
     keyState[e.keyCode] = false;
   };
-
 
   this.isDown = function(keyCode) {
     return keyState[keyCode] === true;
@@ -31,6 +30,5 @@ var Keyboarder = function() {
     0x0: 88, // "X",
     0xB: 67, // "C",
     0xF: 86, // "V"
-
   };
 };

@@ -1,20 +1,19 @@
-$( document ).ready(function() {
+const select = document.getElementById("romSelect")
 
-  $('#romSelect').change( function(event) {
-    var selectedROM = $("#romSelect option:selected").val();
-    var chip = Chip8();
-    chip.loadFonts();
-    chip.loadProgram(selectedROM); 
+select.addEventListener("change", event => {
+  const selectedROM = select.value
 
-    var tick = function() {
-      chip.setKeyBuffer();
-      chip.run();
-      chip.display.render(chip.screenBuffer);
-      requestAnimationFrame(tick);
-    };
+  const chip = require('./chip8')(document.getElementById('chip8Screen'))
 
-    tick();
+  chip.loadFonts();
+  chip.loadProgram(selectedROM);
 
-  });
-});
+  const tick = function() {
+    chip.setKeyBuffer();
+    chip.run();
+    chip.display.render(chip.screenBuffer);
+    requestAnimationFrame(tick);
+  };
 
+  tick();
+})

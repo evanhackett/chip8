@@ -1,0 +1,26 @@
+{
+  "name": "chip8",
+  "version": "1.0.0",
+  "description": "chip8 emulator",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify src/app.js -o bundle.js",
+    "watch": "watchify src/app.js -o bundle.js --debug --verbose",
+    "start": "npm run watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evanhackett/chip8.git"
+  },
+  "author": "Evan Hackett",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/evanhackett/chip8/issues"
+  },
+  "homepage": "https://github.com/evanhackett/chip8#readme",
+  "devDependencies": {
+    "browserify": "^16.2.3",
+    "watchify": "^3.11.0"
+  }
+}

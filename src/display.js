@@ -1,16 +1,15 @@
-// the Display class provides functions to interface between the chip8's screenBuffer and an html canvas
-var Display = function() {
+// interfaces between the chip8's screenBuffer and an html canvas
+module.exports = function(canvas) {
+  var ctx = canvas.getContext('2d');
+  var width = canvas.width;
+  var height = canvas.height;
+  // since 64 x 32 is really small, we made a 640 x 320 canvas. This means we have to scale up our pixels
+  var scaleFactor = Math.floor(width / 64);
+
   var display = {};
 
   // this function takes the screenBuffer and draws white pixels where 1's occur and Black pixels where 0's occur
   display.render = function(screenBuffer) {
-    var canvas = $('#chip8Screen')[0];
-    var ctx = canvas.getContext('2d');
-    var width = canvas.width;
-    var height = canvas.height;
-    // since 64 x 32 is really small, we made a 640 x 320 canvas. This means we have to scale up our pixels
-    var scaleFactor = Math.floor(width / 64);
-
     // we want 'on' pixels to be white
     // and 'off' pixels to be black
     
@@ -29,7 +28,6 @@ var Display = function() {
       }
     }
   };
-
 
   return display;
 };

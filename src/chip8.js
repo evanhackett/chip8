@@ -1,9 +1,10 @@
-// core CPU
+const Keyboarder = require('./keyboarder')
 
-var Chip8 = function() {
+module.exports = function(canvas) {
   var chip = {};
 
-  // keyboard testing
+  chip.display = require('./display')(canvas)
+  
   chip.keyboarder = new Keyboarder();
 
   // the chip8 keypad supports 16 input buttons.
@@ -28,13 +29,9 @@ var Chip8 = function() {
   chip.delayTimer = 0;
   chip.soundTimer = 0;
 
-
   // the screen buffer. The resolution of the chip8 is 64 x 32. 
   // If a bit is '1', the pixel should be white. If a bit is '0', the pixel should be black
   chip.screenBuffer = new Uint8Array(64 * 32); 
-
-  // display provides utility functions for interfacing with a graphics api
-  chip.display = Display();
 
   // display an error and stop program execution when an unsupported opcode is encountered
   chip.unsupportedOpcode = function(opcode) {
